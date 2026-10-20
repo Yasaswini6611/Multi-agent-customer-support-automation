@@ -1,0 +1,6 @@
+{
+  "name": "SupportFlow AI",
+  "description": "Production-grade customer support operations platform with automated email triage, instant verified replies, and supervisor escalation routing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

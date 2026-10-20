@@ -1,0 +1,466 @@
+{
+  "name": "Customer support automation",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "feda0a3c-b685-42b6-85b3-49ace3ee040a",
+              "name": "customer_message",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "2a86cdf3-44b2-4a39-aff7-23d4663f82de",
+              "name": "customer_email",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -368,
+        -80
+      ],
+      "id": "a73d052b-596d-4270-ad0b-d3ae2414b0c6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        128
+      ],
+      "id": "2e82793e-642b-4072-bcc4-ecee4c0fff06",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QMpW3ThQ8tTSWBCp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.customer_message }}",
+        "options": {
+          "systemMessage": "You are the Triage Agent for an e-commerce customer support team.\n\nAnalyze the customer's message and return a JSON object with exactly these fields:\n\n- category: \"refund\", \"damaged_product\", \"order_status\", \"technical_issue\", or \"other\"\n- priority: \"low\", \"medium\", or \"high\"\n- sentiment: \"positive\", \"neutral\", or \"negative\"\n- needs_human: true or false\n- reason: a short explanation\n\nRules:\n1. Damaged products and refund requests may be high priority.\n2. Set needs_human to true if the customer is seriously frustrated or a refund needs human verification.\n3. Never claim a refund has been approved.\n4. Use only information in the customer's message.\n5. Return valid JSON only. Do not use Markdown code fences.\nRouting rules:\n- Routine order-status questions and general product questions should have needs_human = false.\n- Set needs_human = true only for complaints requiring special handling, refund disputes, sensitive issues, or cases that genuinely require human judgment.\n- Do not send a routine question to human support just because order information needs to be checked.\n- Set priority based on the actual urgency of the customer's message.\n- Return valid structured output using the required fields.\nImportant routing rule:\nA routine order-status question must have needs_human = false, even if the customer has not provided an order number. The Customer Reply Agent can ask the customer for their order number.\nSet needs_human = true only when the issue genuinely requires human review, such as a complex complaint, a sensitive case, or a refund dispute.\nSet needs_human to true for:\n- Order or shipping status that requires checking real order records.\n- Refund or payment requests.\n- Complaints or angry customers.\n- Missing information that prevents a reliable answer.\n- Any question you cannot confidently classify.\n\nSet needs_human to false only for simple general questions that can be answered reliably without accessing private order data.\n\nReturn valid JSON only."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -144,
+        -80
+      ],
+      "id": "e9bf9d74-2ee8-4976-9539-8318e70c7623",
+      "name": "Triage Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c2b06602-093e-4f95-adef-4ff9af75647e",
+              "name": "triage",
+              "value": "={{ JSON.parse($json.output) }}",
+              "type": "object"
+            },
+            {
+              "id": "465ed77c-ba6a-4135-ba6d-58cc96d8adc7",
+              "name": "category",
+              "value": "={{ JSON.parse($json.output).category }}",
+              "type": "string"
+            },
+            {
+              "id": "ce43932f-8ff4-4c43-981d-0a87507438e2",
+              "name": "priority",
+              "value": "={{ JSON.parse($json.output).priority }}",
+              "type": "string"
+            },
+            {
+              "id": "e01c0f97-2cc6-4534-9098-f1c1decfc4cb",
+              "name": "sentiment",
+              "value": "={{ JSON.parse($json.output).sentiment }}",
+              "type": "string"
+            },
+            {
+              "id": "c8602d1e-5b52-4287-ad54-f4b53826c3df",
+              "name": "needs_human",
+              "value": "={{ JSON.parse($json.output).needs_human }}",
+              "type": "boolean"
+            },
+            {
+              "id": "ff2f9115-c0ee-479c-a4a3-39fb29b10b6d",
+              "name": "reason ",
+              "value": "={{ JSON.parse($json.output).reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        -80
+      ],
+      "id": "4a44da70-2418-4132-b19a-4cfb4bb894da",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0ec51fe0-3263-405d-801f-4c0ce7981c5a",
+              "leftValue": "={{ $json.needs_human }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        464,
+        -80
+      ],
+      "id": "315d983f-d7b0-4d9f-a147-5af7249d682c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ff67f3bc-0029-4b7a-95f0-419497dddd47",
+              "name": "support_status",
+              "value": "Needs human review",
+              "type": "string"
+            },
+            {
+              "id": "c18ad443-b157-4e12-a9e3-1e941195e402",
+              "name": "support_priority",
+              "value": "={{ $json.priority }}",
+              "type": "string"
+            },
+            {
+              "id": "088eeaeb-b8e2-41d4-8b6a-59aa0db05168",
+              "name": "support_category",
+              "value": "={{ $json.category }}",
+              "type": "string"
+            },
+            {
+              "id": "03afbd21-446c-4da0-b43e-c90775d65d31",
+              "name": "support_reason",
+              "value": "={{ $('Edit Fields1').item.json.triage.reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        688,
+        -176
+      ],
+      "id": "963ab6d0-ea23-487b-9158-ad7bc31f4826",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "sendTo": "yasaswinichalumuru@gmail.com",
+        "subject": "={{ '[Customer Support] ' + $json.support_priority.toUpperCase() + ' - ' + $json.support_category }}",
+        "message": "=\n\n{{\n  '<h2>Customer Support Alert</h2>' +\n  '<p><strong>Status:</strong> ' + $json.support_status + '</p>' +\n  '<p><strong>Priority:</strong> ' + $json.support_priority + '</p>' +\n  '<p><strong>Category:</strong> ' + $json.support_category + '</p>' +\n  '<p><strong>AI reason:</strong> ' + $json.support_reason + '</p>' +\n  '<p><strong>Action required:</strong> Please review the customer case and verify refund eligibility before responding.</p>'\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        -176
+      ],
+      "id": "edb48e26-512b-49ff-975b-a289eccf658c",
+      "name": "Send a message",
+      "webhookId": "e32cf4de-9387-4a8a-9adb-3b9ece76f3ac",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pLv9bLrq2gUgEbJC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        224
+      ],
+      "id": "63ea9c9c-7683-44ce-870a-ee8aff5d68c3",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QMpW3ThQ8tTSWBCp",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "78741d32-7df2-412c-972a-19897e5dda9e",
+              "name": "customer_reply",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1056,
+        16
+      ],
+      "id": "516ae418-3e84-4312-a3c8-54ba1c30e4b2",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer email:\n{{ $('Edit Fields').item.json.customer_message }}\n\nWrite a direct, helpful reply to the customer's actual question. If this is promotional or spam content, do not reply; explain that in the workflow by returning: IGNORE_EMAIL.",
+        "options": {
+          "systemMessage": "You are a professional customer support assistant.\n\nRead the customer's actual email carefully and respond directly to their specific question or request.\n\nRules:\n- Identify what the customer is asking before writing your reply.\n- Answer the specific question using only reliable information provided in the customer's message or available context.\n- Do not merely repeat or rephrase the customer's message.\n- Do not start with phrases like \"Thanks for sharing this information\" or \"How can I assist you today?\"\n- If the customer asks about a product or feature and you lack enough information, briefly explain what you need to know or ask one relevant clarifying question.\n- For order-status questions without an order number, politely ask for the order number.\n- Never invent facts, order details, prices, policies, or promises.\n- Keep the response concise, natural, and professional.\n- Return only the email body. Do not include a signature; the Gmail node adds it automatically.\n- You do not have access to the store's order database or live shipping information.\n- Never claim that you checked an order, verified a payment, processed a refund, or confirmed shipping.\n- For order-status questions, politely explain that a support representative needs to verify the order.\n- Escalate refund requests, payment issues, complaints, and uncertain cases to human support.\n- Never invent order details, store policies, or delivery dates."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        16
+      ],
+      "id": "a692d695-8485-421e-81ce-3dbf614f87dd",
+      "name": "Customer Reply Agent"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.customer_email }}",
+        "subject": "={{ 'Customer Support - ' + $('Edit Fields1').item.json.category }}",
+        "message": "={{\n  $json.customer_reply +\n  '\\n\\nIf you need any further assistance, please let us know. We are happy to help!\\n\\n' +\n  'Best regards,\\nCustomer Support Team'\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        16
+      ],
+      "id": "0dfcad15-7111-4d0b-9513-6ffb3e08cf82",
+      "name": "Send a message1",
+      "webhookId": "3412aeb8-cd18-48a8-85d9-1190e0aabcee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pLv9bLrq2gUgEbJC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "maxResults": 5,
+        "filters": {
+          "q": "in:inbox -category:promotions -category:social -yasaswinichalumuru@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -560,
+        -80
+      ],
+      "id": "66b70b87-e842-42f9-93c2-5fc35e9ae57e",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pLv9bLrq2gUgEbJC",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customer Reply Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Reply Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Reply Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6d47b6c8-9a86-4ebb-a100-6368a1ca8b36",
+  "meta": {
+    "instanceId": "f2f72f73671800f5de44ab212528b9ed8ae109fddfac7aa0a7a6c2bbc81ccbd1"
+  },
+  "nodeGroups": [],
+  "id": "kiRcdE5vMQKOtcyb",
+  "tags": []
+}
