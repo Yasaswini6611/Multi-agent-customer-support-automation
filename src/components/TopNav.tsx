@@ -1,43 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, Menu, Sparkles, LogOut, User, Settings, Check, ChevronDown, LogIn } from 'lucide-react';
+import { Headphones, Sparkles, LogOut, User, Settings, ChevronDown, LogIn, Menu, X, ArrowRight } from 'lucide-react';
 import { UserProfile } from './AuthModal';
 
 interface TopNavProps {
-  onToggleMobileMenu: () => void;
-  activeTab: string;
-  onNewAnalysisClick: () => void;
+  onHomeClick: () => void;
+  onAnalyzeClick: () => void;
+  onHowItWorksClick: () => void;
+  onGetStartedClick: () => void;
   currentUser: UserProfile | null;
   onOpenLogin: () => void;
   onLogout: () => void;
+  activeSection: string;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
-  onToggleMobileMenu,
-  activeTab,
-  onNewAnalysisClick,
+  onHomeClick,
+  onAnalyzeClick,
+  onHowItWorksClick,
+  onGetStartedClick,
   currentUser,
   onOpenLogin,
   onLogout,
+  activeSection,
 }) => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const getTabTitle = (tab: string) => {
-    switch (tab) {
-      case 'dashboard':
-        return 'Operations Dashboard';
-      case 'analysis':
-        return 'Email Analysis & Response Assistant';
-      case 'review':
-        return 'Human Review Escalations';
-      case 'history':
-        return 'Activity History & Resolution Logs';
-      default:
-        return 'Dashboard';
-    }
-  };
-
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -49,124 +38,187 @@ export const TopNav: React.FC<TopNavProps> = ({
   }, []);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30">
-      {/* Left: Mobile hamburger & Breadcrumbs */}
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
+        {/* Brand: SupportFlow AI in top-left with simple professional logo */}
         <button
-          onClick={onToggleMobileMenu}
-          className="md:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-          aria-label="Open sidebar"
+          onClick={onHomeClick}
+          className="flex items-center gap-2.5 text-left cursor-pointer group"
         >
-          <Menu className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs group-hover:bg-blue-500 transition-colors">
+            <Headphones className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-base font-extrabold text-slate-900 tracking-tight block">
+              SupportFlow AI
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium block -mt-1">
+              Customer Support Automation
+            </span>
+          </div>
         </button>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="font-semibold text-slate-900 hidden sm:inline">SupportFlow AI</span>
-          <span className="text-slate-300 hidden sm:inline">/</span>
-          <span className="text-slate-600 font-medium">{getTabTitle(activeTab)}</span>
-        </div>
-      </div>
+        {/* Minimal Navigation Bar: Home, Analyze Message, How It Works */}
+        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-600">
+          <button
+            onClick={onHomeClick}
+            className={`hover:text-blue-600 transition-colors cursor-pointer ${
+              activeSection === 'home' ? 'text-blue-600 font-bold' : ''
+            }`}
+          >
+            Home
+          </button>
+          <button
+            onClick={onAnalyzeClick}
+            className={`hover:text-blue-600 transition-colors cursor-pointer ${
+              activeSection === 'analyze' ? 'text-blue-600 font-bold' : ''
+            }`}
+          >
+            Analyze Message
+          </button>
+          <button
+            onClick={onHowItWorksClick}
+            className={`hover:text-blue-600 transition-colors cursor-pointer ${
+              activeSection === 'how-it-works' ? 'text-blue-600 font-bold' : ''
+            }`}
+          >
+            How It Works
+          </button>
+        </nav>
 
-      {/* Middle: Search Box */}
-      <div className="flex-1 max-w-md hidden md:block">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search tickets, customers, or categories (e.g. refund, order #)..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-white transition-colors"
-          />
-        </div>
-      </div>
+        {/* Right Action Zone: Sign In & Prominent "Get Started" Button */}
+        <div className="hidden sm:flex items-center gap-3">
+          {currentUser ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-semibold ring-2 ring-slate-100">
+                  {currentUser.avatarInitials}
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
 
-      {/* Right: Actions, Notifications & User Dropdown */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onNewAnalysisClick}
-          className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">New</span> Email Analysis
-        </button>
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs animate-fadeIn">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <div className="font-semibold text-slate-900 truncate">
+                      {currentUser.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-mono truncate">
+                      {currentUser.email}
+                    </div>
+                    <div className="mt-1.5 inline-block text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                      {currentUser.role}
+                    </div>
+                  </div>
 
-        <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
-
-        {/* Notifications */}
-        <button
-          title="Notifications"
-          className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5" />
-        </button>
-
-        {/* Auth State: Logged In vs Logged Out */}
-        {currentUser ? (
-          <div className="relative" ref={dropdownRef}>
+                  <div className="pt-1 border-t border-slate-100">
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
             <button
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              onClick={onOpenLogin}
+              className="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-semibold ring-2 ring-slate-100">
-                {currentUser.avatarInitials}
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
+              Sign In
             </button>
+          )}
 
-            {/* User Dropdown Menu */}
-            {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs animate-fadeIn">
-                {/* Profile Header */}
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <div className="font-semibold text-slate-900 truncate">
-                    {currentUser.name}
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-mono truncate">
-                    {currentUser.email}
-                  </div>
-                  <div className="mt-1.5 inline-block text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                    {currentUser.role}
-                  </div>
-                </div>
+          <button
+            onClick={onGetStartedClick}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-xs shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Get Started</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-                {/* Menu Items */}
-                <div className="py-1">
-                  <div className="px-4 py-2 text-slate-600 flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Support Lead Workspace</span>
-                  </div>
-                  <div className="px-4 py-2 text-slate-600 flex items-center gap-2">
-                    <Settings className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Workspace Settings</span>
-                  </div>
-                </div>
+        {/* Mobile Hamburger */}
+        <div className="flex sm:hidden items-center gap-2">
+          <button
+            onClick={onGetStartedClick}
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg"
+          >
+            Get Started
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
 
-                {/* Logout Button */}
-                <div className="pt-1 border-t border-slate-100">
-                  <button
-                    onClick={() => {
-                      setUserDropdownOpen(false);
-                      onLogout();
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Log Out</span>
-                  </button>
-                </div>
-              </div>
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-t border-slate-100 px-4 pt-2 pb-4 space-y-2 bg-white">
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onHomeClick();
+            }}
+            className="block w-full text-left py-2 text-xs font-semibold text-slate-700 hover:text-blue-600"
+          >
+            Home
+          </button>
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onAnalyzeClick();
+            }}
+            className="block w-full text-left py-2 text-xs font-semibold text-slate-700 hover:text-blue-600"
+          >
+            Analyze Message
+          </button>
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onHowItWorksClick();
+            }}
+            className="block w-full text-left py-2 text-xs font-semibold text-slate-700 hover:text-blue-600"
+          >
+            How It Works
+          </button>
+          <div className="pt-2 border-t border-slate-100">
+            {currentUser ? (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onLogout();
+                }}
+                className="w-full text-left py-2 text-xs font-semibold text-rose-600"
+              >
+                Log Out ({currentUser.name})
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenLogin();
+                }}
+                className="w-full text-left py-2 text-xs font-semibold text-blue-600"
+              >
+                Sign In
+              </button>
             )}
           </div>
-        ) : (
-          <button
-            onClick={onOpenLogin}
-            className="px-3.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Sign In</span>
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 };

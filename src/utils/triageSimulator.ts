@@ -5,6 +5,8 @@ export function analyzeEmail(message: string): AnalysisResult {
 
   // Sentiment analysis
   let sentiment: Sentiment = 'neutral';
+  let sentiment_explanation = 'The customer wrote in a calm and direct tone without strong frustration.';
+
   const angryWords = [
     'angry', 'furious', 'horrible', 'terrible', 'unacceptable', 'scam',
     'fraud', 'dispute', 'rip off', 'ridiculous', 'worst', 'failed',
@@ -14,8 +16,10 @@ export function analyzeEmail(message: string): AnalysisResult {
 
   if (angryWords.some(w => lower.includes(w)) || message.includes('!')) {
     sentiment = 'negative';
+    sentiment_explanation = 'The customer appears frustrated or dissatisfied with their experience.';
   } else if (positiveWords.some(w => lower.includes(w))) {
     sentiment = 'positive';
+    sentiment_explanation = 'The customer expressed satisfaction or appreciation in their message.';
   }
 
   // Category detection
@@ -65,53 +69,81 @@ export function analyzeEmail(message: string): AnalysisResult {
     category = 'technical_issue';
   }
 
-  // Priority & Human Review requirement
+  // Priority, Human Review & Plain-English Explanations
   let priority: Priority = 'medium';
+  let priority_explanation = 'Standard support inquiry that should be handled during regular business hours.';
   let needs_human = false;
   let reason = '';
+  let problem_summary = '';
+  let recommended_next_step = '';
   let confidence = 0.96;
 
   if (category === 'refund') {
     priority = sentiment === 'negative' ? 'high' : 'medium';
+    priority_explanation = sentiment === 'negative' 
+      ? 'High priority because the customer is requesting their money back with strong urgency or payment dispute concern.'
+      : 'Medium priority payment inquiry requiring review of the transaction record.';
     needs_human = true;
-    reason = 'Refund & payment transactions require manual financial authorization to protect against unauthorized debits.';
+    problem_summary = 'The customer is requesting a financial refund or disputing a charge on their account.';
+    reason = 'Refund and billing transactions involve real money and require human verification to ensure security.';
+    recommended_next_step = 'A support agent should look up the order in the payment system, confirm refund eligibility, and send a personalized confirmation.';
     confidence = 0.98;
   } else if (category === 'damaged_product') {
     priority = 'high';
+    priority_explanation = 'High priority because the product arrived unusable or broken, creating a negative customer delivery experience.';
     needs_human = true;
-    reason = 'Physical damage claim requires visual photo verification and warehouse replacement dispatch authorization.';
+    problem_summary = 'The customer received an item that was broken, cracked, or damaged upon delivery.';
+    reason = 'Damaged items require a support specialist to review photos and authorize a free replacement shipment.';
+    recommended_next_step = 'Ask the customer for a photo of the damaged package, then initiate a replacement order from the warehouse.';
     confidence = 0.97;
   } else if (sentiment === 'negative' && (lower.includes('complaint') || lower.includes('dispute') || lower.includes('unacceptable') || lower.includes('lawyer'))) {
     priority = 'high';
+    priority_explanation = 'High priority because the customer has expressed serious dissatisfaction that requires careful handling.';
     needs_human = true;
-    reason = 'Customer expresses heightened frustration requiring senior human representative attention and de-escalation.';
+    problem_summary = 'The customer is submitting a formal complaint or expressing severe dissatisfaction.';
+    reason = 'Escalated complaints require empathetic human communication to restore customer trust.';
+    recommended_next_step = 'Assign this ticket to a senior customer support lead for a personalized, empathetic phone or email response.';
     confidence = 0.95;
   } else if (category === 'order_status') {
     const hasOrderNumber = /(?:#|order\s*(?:id|number|#)?\s*)\b[A-Za-z0-9-_]{4,15}\b/i.test(message);
     if (lower.includes('lost') || lower.includes('stolen') || lower.includes('weeks') || lower.includes('never arrived')) {
       priority = 'high';
+      priority_explanation = 'High priority due to a potential delayed or missing package that has not moved for an extended time.';
       needs_human = true;
-      reason = 'Potential lost package claim requiring carrier escalation and warehouse tracking investigation.';
+      problem_summary = 'The customer has not received their shipment and suspects the parcel may be lost in transit.';
+      reason = 'Lost parcel investigations require checking courier dispatch logs directly.';
+      recommended_next_step = 'Contact the delivery courier to trace the tracking number, and offer a replacement if the package cannot be found.';
       confidence = 0.94;
     } else {
       priority = 'low';
+      priority_explanation = 'Routine inquiry asking for normal delivery updates.';
       needs_human = false;
       confidence = 0.99;
       if (hasOrderNumber) {
-        reason = 'Standard order query with order identifier provided. Automated reply guides the customer to live parcel telemetry.';
+        problem_summary = 'The customer wants to know where their order is and provided their order reference number.';
+        reason = 'Standard shipping status question that can be answered immediately with tracking instructions.';
+        recommended_next_step = 'Send the customer their direct carrier tracking link so they can see live transit checkpoints.';
       } else {
-        reason = 'Routine inquiry with missing order number. Automated assistant prompts customer for order ID without escalating.';
+        problem_summary = 'The customer is inquiring about their delivery date but did not include their order number.';
+        reason = 'Simple inquiry where the automated reply can politely ask the customer for their order number.';
+        recommended_next_step = 'Reply politely asking the customer to provide their order number so we can look up their delivery.';
       }
     }
   } else if (category === 'technical_issue') {
     priority = sentiment === 'negative' ? 'medium' : 'low';
+    priority_explanation = 'Standard product feature or setup question that can be answered using product guides.';
     needs_human = false;
-    reason = 'Technical hardware inquiry matching documented product specifications and troubleshooting procedures.';
+    problem_summary = 'The customer has a question about device setup, Bluetooth pairing, or technical specifications.';
+    reason = 'The question matches standard documented product instructions and does not require private account modifications.';
+    recommended_next_step = 'Provide the customer with the step-by-step setup guide or pairing instructions.';
     confidence = 0.93;
   } else {
     priority = 'low';
+    priority_explanation = 'General customer message that can be handled through standard communication.';
     needs_human = false;
-    reason = 'Standard informational inquiry with zero billing or inventory modification requirements.';
+    problem_summary = 'The customer is sending general feedback or an inquiry about our products.';
+    reason = 'General message not requiring billing access or sensitive account changes.';
+    recommended_next_step = 'Send a friendly acknowledgment thanking the customer and offering further assistance.';
     confidence = 0.91;
   }
 
@@ -120,7 +152,11 @@ export function analyzeEmail(message: string): AnalysisResult {
     priority,
     sentiment,
     needs_human,
+    problem_summary,
     reason,
+    priority_explanation,
+    sentiment_explanation,
+    recommended_next_step,
     confidence,
   };
 }

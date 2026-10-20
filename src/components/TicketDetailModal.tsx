@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SupportTicket } from '../types/support';
-import { X, Copy, Check, ShieldAlert, CheckCircle2, User, Clock, Mail } from 'lucide-react';
+import { X, Copy, Check, ShieldAlert, CheckCircle2, User, Clock, Mail, ArrowRight } from 'lucide-react';
 
 interface TicketDetailModalProps {
   ticket: SupportTicket | null;
@@ -23,7 +23,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden animate-fadeIn">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -73,14 +73,24 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           {/* Customer Message */}
           <div className="space-y-1.5">
             <span className="font-semibold text-slate-700">Customer Message:</span>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 leading-relaxed">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 leading-relaxed italic">
               "{ticket.message}"
             </div>
           </div>
 
+          {/* What is the problem? */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+            <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider block">
+              What is the problem?
+            </span>
+            <p className="font-semibold text-slate-900 text-xs leading-relaxed">
+              {ticket.analysis.problem_summary || ticket.analysis.reason}
+            </p>
+          </div>
+
           {/* AI Analysis Grid */}
           <div className="space-y-2">
-            <span className="font-semibold text-slate-700">AI Triage Diagnosis:</span>
+            <span className="font-semibold text-slate-700">Diagnosis Details:</span>
             <div className="grid grid-cols-3 gap-2.5">
               <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg">
                 <span className="text-[10px] uppercase font-semibold text-slate-400 block">Category</span>
@@ -101,10 +111,20 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 </span>
               </div>
             </div>
-            <div className="bg-blue-50/50 border border-blue-200/60 p-3 rounded-lg text-slate-700 leading-relaxed">
-              {ticket.analysis.reason}
-            </div>
           </div>
+
+          {/* Recommended Next Step */}
+          {ticket.analysis.recommended_next_step && (
+            <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 space-y-1">
+              <span className="font-bold text-blue-900 text-[11px] flex items-center gap-1.5">
+                <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+                Recommended Next Step:
+              </span>
+              <p className="text-blue-800 text-xs leading-relaxed">
+                {ticket.analysis.recommended_next_step}
+              </p>
+            </div>
+          )}
 
           {/* Suggested Reply */}
           <div className="space-y-2">

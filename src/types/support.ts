@@ -8,7 +8,11 @@ export interface AnalysisResult {
   priority: Priority;
   sentiment: Sentiment;
   needs_human: boolean;
+  problem_summary: string;
   reason: string;
+  priority_explanation: string;
+  sentiment_explanation: string;
+  recommended_next_step: string;
   confidence: number;
 }
 
